@@ -1,245 +1,199 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Security.Cryptography;
-using System.Numerics;
+namespace DZ_Players;
 
-namespace DZ_Players
+public partial class PlayerEditor : UserControl
 {
-    public partial class PlayerEditor : UserControl
+    private DzPlayersDb? DB;
+    public PlayerEditor()
     {
-        private DZ_PlayersDB? DB;
-        private SHA256 sha256_hash;
-        public PlayerEditor()
-        {
-            sha256_hash = SHA256.Create();
-            InitializeComponent();
-        }
-        public void LoadPlayerDB(string path)
-        {
-            DB = new DZ_PlayersDB(path);
+        InitializeComponent();
+    }
+    public void LoadPlayerDB(string path)
+    {
+        DB = new DzPlayersDb(path);
 
-            if(DB != null) 
-            {
-                playerCounter.Text = "Записей:" + DB.Players.Count;
-                LoadPlayersList();
-            }
-        }
-        public void ReloadDB(string path)
+        if(DB != null) 
         {
-            ResetDB();
-            ResetControls();
-            LoadPlayerDB(path);
+            playerCounter.Text = $"Записей: {DB.Players.Count}";
+            LoadPlayersList();
         }
-        public void ResetDB() { DB = null; }
+    }
+    public void ReloadDB(string path)
+    {
+        ResetDB();
+        ResetControls();
+        LoadPlayerDB(path);
+    }
 
-        public void ResetControls()
-        {
-            playerCounter.Text = "Записей:0";
+    private void ResetDB() => DB = null;
 
-            playersListBox.Items.Clear();
-            playerInventory.Nodes.Clear();
+    private void ResetControls()
+    {
+        playerCounter.Text = "Записей: 0";
+
+        playersListBox.Items.Clear();
+        playerInventory.Nodes.Clear();
+        dupeInventory.Nodes.Clear();
+
+        playerUID.Clear();
+        playerChartype.Clear();
+        playerStatus.Text = "None";
+    }
+    private void LoadPlayersList()
+    {
+        playersListBox.BeginUpdate();
+
+        foreach ( var player in DB.Players) 
+            playersListBox.Items.Add(player);
+
+        playersListBox.DisplayMember = "UID";
+        playersListBox.SelectedIndex = 0;
+        playersListBox.EndUpdate();
+    }
+
+    private void Click_Button_Action(object sender, EventArgs e)
+    {
+        if (DB == null)
+            return;
+        if (sender == searchPlayerButton)
+            FindNextPlayer();
+        else if (sender == searchDuplicatesButton)
+            SearchDuplicates();
+        else if(sender == clearDuplicatesListButton)
             dupeInventory.Nodes.Clear();
 
-            playerUID.Clear();
-            playerChartype.Clear();
-            playerStatus.Text = "None";
-        }
-        private void LoadPlayersList()
+    }
+    private void FindNextPlayer()
+    {
+        if (string.IsNullOrWhiteSpace(searchPlayer.Text)) 
+            return;
+        var uid = searchPlayer.Text;
+
+        if (searchPlayer.Text.Length == 17) 
+            uid = Utils.SteamIDToUID(uid);
+
+        foreach (var item in playersListBox.Items)
         {
-            playersListBox.BeginUpdate();
-
-            foreach ( var player in DB.Players)
-            {
-                playersListBox.Items.Add(player);
-            }
-
-            playersListBox.DisplayMember = "UID";
-            playersListBox.SelectedIndex = 0;
-            playersListBox.EndUpdate();
+            if (item.ToString() != uid)
+                continue;
+            playersListBox.SelectedItem = item;
+            return;
         }
-        private string ConvertSteam64ToUID(string steam64)
+    }
+    private void SearchDuplicates()
+    {
+        var allItemsList = new Dictionary<string, List<DzItem>>();
+        var parentWithDupedItems = new Dictionary<string, List<DzItem>>();
+
+        var playerNode = new TreeNode("Players");
+        var itemsNode = new TreeNode("Items");
+
+        foreach (var player in DB.Players)
         {
-            return System.Convert.ToBase64String(sha256_hash.ComputeHash(Encoding.ASCII.GetBytes(steam64))).Replace('/', '_').Replace('+', '-');
-        }
-        private void Click_Button_Action(object sender, EventArgs e)
-        {
-            if (DB != null)
-            {
-                if (sender == searchPlayerButton)
-                    FindNextPlayer();
-                else if (sender == searchDuplicatesButton)
-                    SearchDuplicates();
-                else if(sender == clearDuplicatesListButton)
-                    dupeInventory.Nodes.Clear();
-            }
-            
-        }
-        private void FindNextPlayer()
-        {
-            if (searchPlayer.Text.Length > 0)
-            {
-                string uid = searchPlayer.Text;
-
-                if (searchPlayer.Text.Length == 17)
-                {
-                    uid = ConvertSteam64ToUID(uid);
-                }
-
-                foreach (var item in playersListBox.Items)
-                {
-                    if (item.ToString() == uid)
-                    {
-                        playersListBox.SelectedItem = item;
-                        return;
-                    }
-
-                }
-            }
-        }
-        private void SearchDuplicates()
-        {
-            Dictionary<string,List<DZ_Item>> AllitemList = new Dictionary<string, List<DZ_Item>>();
-            Dictionary<string,List<DZ_Item>> ParentWithDupedItems = new Dictionary<string, List<DZ_Item>>();
-
-            TreeNode player_node = new TreeNode("Players");
-            TreeNode items_node = new TreeNode("Items");
-
-            foreach (var player in DB.Players)
-            {
-                if( player.Items != null && player.Alive)
-                {
-                    foreach (var item in player.Items)
-                    {
-                        if(!AllitemList.ContainsKey(item.GetN_ID()))
-                            AllitemList.Add(item.GetN_ID(), new List<DZ_Item>());
-
-                        AllitemList[item.GetN_ID()].Add(item);
-                    }
-                }
-            }
-
-            foreach (var pair_item in AllitemList)
-            {
-                if(pair_item.Value.Count > 1)
-                {
-
-                    TreeNode item_node = new TreeNode(pair_item.Key);
-
-                    foreach(var item in pair_item.Value)
-                    {
-                        if (!ParentWithDupedItems.ContainsKey(item.Parent))
-                            ParentWithDupedItems.Add(item.Parent, new List<DZ_Item>());
-
-                        ParentWithDupedItems[item.Parent].Add(item);
-                        item_node.Nodes.Add(ParseItem(item));
-                    }
-
-                    items_node.Nodes.Add(item_node);
-                }
-            }
-
-            List<KeyValuePair<string, List<DZ_Item>>> sort_dict = ParentWithDupedItems.ToList();
-
-            sort_dict.Sort(
-            delegate (KeyValuePair<string, List<DZ_Item>> pair1,
-            KeyValuePair<string, List<DZ_Item>> pair2)
-            {
-                return pair2.Value.Count.CompareTo(pair1.Value.Count);
-            });
-
-            dupeInventory.BeginUpdate();
-            dupeInventory.Nodes.Clear();
-           
-
-            foreach (var pair in sort_dict)
-            {
-                TreeNode player = new TreeNode("Count: " + pair.Value.Count + " "+ pair.Key);
-
-                foreach (var item in pair.Value)
-                {
-                    player.Nodes.Add(ParseItem(item));
-                }
-
-                player_node.Nodes.Add(player);
-            }
-
-            dupeInventory.Nodes.Add(player_node);
-            dupeInventory.Nodes.Add(items_node);
-
-            dupeInventory.EndUpdate();
-        
-        }
-        private void SelectNextPlayer(object sender, EventArgs e)
-        {
-            if (playersListBox.SelectedIndex == -1) return;
-
-            DZ_Char? player = playersListBox.SelectedItem as DZ_Char;
-
-            if (player == null ) return;
-
-            playerUID.Text = player.UID;
-            playerChartype.Text = player.Character_name;
-
-            if(player.Alive)
-                playerStatus.Text = "Alive";
-            else
-                playerStatus.Text = "Dead";
-
-            ParseInventory(player);
-        }
-        private void ParseInventory(DZ_Char? player)
-        {
-            if(player == null) return;
-            if(player.Items == null) return;
-
-            playerInventory.BeginUpdate();
-            playerInventory.Nodes.Clear();
-
+            if (player.Items == null || !player.Alive)
+                continue;
             foreach (var item in player.Items)
             {
-                playerInventory.Nodes.Add(ParseItem(item));
+                if(!allItemsList.ContainsKey(item.GetP_ID()))
+                    allItemsList.Add(item.GetP_ID(), new List<DzItem>());
+
+                allItemsList[item.GetP_ID()].Add(item);
             }
-
-            playerInventory.EndUpdate();
         }
-        private TreeNode ParseItem(DZ_Item item)
+
+        foreach (var pairItem in allItemsList)
         {
-             TreeNode itemNode = new TreeNode(item.Classname);
-             itemNode.Tag = item;
+            if (pairItem.Value.Count <= 1) 
+                continue;
+            var itemNode = new TreeNode(pairItem.Key);
+            foreach(var item in pairItem.Value)
+            {
+                if (!parentWithDupedItems.ContainsKey(item.Parent))
+                    parentWithDupedItems.Add(item.Parent, new List<DzItem>());
 
-             itemNode.Nodes.Add( new TreeNode("Slot: " + item.Slot));
-             itemNode.Nodes.Add( new TreeNode("Persistence ID: " + item.GetID()));
-
-             TreeNode cargo = new TreeNode("Cargo");
-             TreeNode attachments = new TreeNode("Attachments");
-
-             if(item.Childs != null)
-             {
-                foreach( var child in item.Childs )
-                {
-                    TreeNode child_node = ParseItem(child);
-
-                    if( child.Slot == "cargo") 
-                        cargo.Nodes.Add( child_node );
-                    else
-                        attachments.Nodes.Add( child_node );
-                }
-
-                if( cargo.Nodes.Count > 0)
-                    itemNode.Nodes.Add(cargo);
-
-                if( attachments.Nodes.Count > 0)
-                    itemNode.Nodes.Add(attachments);
-             }
-
-             return itemNode;
+                parentWithDupedItems[item.Parent].Add(item);
+                itemNode.Nodes.Add(ParseItem(item));
+            }
+            itemsNode.Nodes.Add(itemNode);
         }
+
+        var sortDict = parentWithDupedItems
+            .OrderByDescending(kvp => kvp.Value.Count)
+            .ToList();
+
+        dupeInventory.BeginUpdate();
+        dupeInventory.Nodes.Clear();
+           
+
+        foreach (var pair in sortDict)
+        {
+            var player = new TreeNode($"Count: {pair.Value.Count} {pair.Key}");
+
+            foreach (var item in pair.Value) 
+                player.Nodes.Add(ParseItem(item));
+            playerNode.Nodes.Add(player);
+        }
+
+        dupeInventory.Nodes.Add(playerNode);
+        dupeInventory.Nodes.Add(itemsNode);
+
+        dupeInventory.EndUpdate();
+        
+    }
+    private void SelectNextPlayer(object sender, EventArgs e)
+    {
+        if (playersListBox.SelectedIndex == -1) 
+            return;
+
+        if (playersListBox.SelectedItem is not DzChar player)
+            return;
+
+        playerUID.Text = player.UID;
+        playerChartype.Text = player.CharacterName;
+        playerStatus.Text = player.Alive ? "Alive" : "Dead";
+
+        ParseInventory(player);
+    }
+    private void ParseInventory(DzChar? player)
+    {
+        if(player?.Items == null)
+            return;
+
+        playerInventory.BeginUpdate();
+        playerInventory.Nodes.Clear();
+
+        foreach (var item in player.Items) 
+            playerInventory.Nodes.Add(ParseItem(item));
+
+        playerInventory.EndUpdate();
+    }
+    private static TreeNode ParseItem(DzItem item)
+    {
+        var itemNode = new TreeNode(item.Classname);
+        itemNode.Tag = item;
+
+        itemNode.Nodes.Add( new TreeNode($"Slot: {item.Slot}"));
+        itemNode.Nodes.Add( new TreeNode($"PersistentID: {item.GetID()}"));
+
+        var cargo = new TreeNode("Cargo");
+        var attachments = new TreeNode("Attachments");
+
+        if (item.Childs == null) 
+            return itemNode;
+        foreach( var child in item.Childs )
+        {
+            var childNode = ParseItem(child);
+
+            if( child.Slot == "cargo") 
+                cargo.Nodes.Add( childNode );
+            else
+                attachments.Nodes.Add( childNode );
+        }
+
+        if( cargo.Nodes.Count > 0)
+            itemNode.Nodes.Add(cargo);
+        if( attachments.Nodes.Count > 0)
+            itemNode.Nodes.Add(attachments);
+
+        return itemNode;
     }
 }
