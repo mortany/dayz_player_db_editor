@@ -34,9 +34,10 @@ public partial class PlayerEditor : UserControl
         playerInventory.Nodes.Clear();
         dupeInventory.Nodes.Clear();
 
+        playerDbId.Clear();
         playerUID.Clear();
         playerChartype.Clear();
-        playerStatus.Text = "None";
+        playerStatus.Text = "Отсутствует";
     }
     private void LoadPlayersList()
     {
@@ -146,6 +147,7 @@ public partial class PlayerEditor : UserControl
         if (playersListBox.SelectedItem is not DzChar player)
             return;
 
+        playerDbId.Text = player.ID.ToString();
         playerUID.Text = player.UID;
         playerChartype.Text = player.CharacterName;
         playerStatus.Text = player.Alive ? "Alive" : "Dead";
