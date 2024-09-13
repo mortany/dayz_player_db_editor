@@ -173,6 +173,7 @@ public partial class PlayerEditor : UserControl
 
         itemNode.Nodes.Add( new TreeNode($"Slot: {item.Slot}"));
         itemNode.Nodes.Add( new TreeNode($"PersistentID: {item.GetID()}"));
+        itemNode.Nodes.Add(new TreeNode($"ParentUID: {item.Parent}"));
 
         var cargo = new TreeNode("Cargo");
         var attachments = new TreeNode("Attachments");
