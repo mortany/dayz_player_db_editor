@@ -93,10 +93,9 @@ public partial class PlayerEditor : UserControl
                 continue;
             foreach (var item in player.Items)
             {
-                if(!allItemsList.ContainsKey(item.GetP_ID()))
-                    allItemsList.Add(item.GetP_ID(), new List<DzItem>());
-
-                allItemsList[item.GetP_ID()].Add(item);
+                if(!allItemsList.ContainsKey(item.PersistentGuid))
+                    allItemsList.Add(item.PersistentGuid, new List<DzItem>());
+                allItemsList[item.PersistentGuid].Add(item);
             }
         }
 
@@ -172,7 +171,7 @@ public partial class PlayerEditor : UserControl
         itemNode.Tag = item;
 
         itemNode.Nodes.Add( new TreeNode($"Slot: {item.Slot}"));
-        itemNode.Nodes.Add( new TreeNode($"PersistentID: {item.GetID()}"));
+        itemNode.Nodes.Add( new TreeNode($"PersistentID: {item.PersistentGuid}"));
         itemNode.Nodes.Add(new TreeNode($"ParentUID: {item.Parent}"));
 
         var cargo = new TreeNode("Cargo");
