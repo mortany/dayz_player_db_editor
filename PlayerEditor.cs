@@ -71,9 +71,9 @@ public partial class PlayerEditor : UserControl
         if (searchPlayer.Text.Length == 17) 
             uid = Utils.SteamIDToUID(uid);
 
-        foreach (var item in playersListBox.Items)
+        foreach (DzChar item in playersListBox.Items)
         {
-            if (item.ToString() != uid)
+            if (item.UID != uid)
                 continue;
             playersListBox.SelectedItem = item;
             return;
