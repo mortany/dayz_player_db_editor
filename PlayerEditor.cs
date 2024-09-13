@@ -215,7 +215,7 @@ namespace DZ_Players
              itemNode.Tag = item;
 
              itemNode.Nodes.Add( new TreeNode("Slot: " + item.Slot));
-             itemNode.Nodes.Add( new TreeNode("NetworkID: " + item.GetID()));
+             itemNode.Nodes.Add( new TreeNode("Persistence ID: " + item.GetID()));
 
              TreeNode cargo = new TreeNode("Cargo");
              TreeNode attachments = new TreeNode("Attachments");

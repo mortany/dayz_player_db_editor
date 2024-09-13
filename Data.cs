@@ -122,12 +122,12 @@ namespace DZ_Players
             Slot = new string(reader.ReadChars(slot_len));
             int custom_data_len = reader.ReadInt32();
 
-            Network_ID = new int[4];
+            Persistence_ID = new int[4];
 
-            Network_ID[0] = reader.ReadInt32();
-            Network_ID[1] = reader.ReadInt32();
-            Network_ID[2] = reader.ReadInt32();
-            Network_ID[3] = reader.ReadInt32();
+            Persistence_ID[0] = reader.ReadInt32();
+            Persistence_ID[1] = reader.ReadInt32();
+            Persistence_ID[2] = reader.ReadInt32();
+            Persistence_ID[3] = reader.ReadInt32();
 
             Data = reader.ReadBytes(custom_data_len - 16);
 
@@ -144,9 +144,9 @@ namespace DZ_Players
         public string Slot { get; set; }
         public byte[] Skip { get; set; }
         public byte[] Data { get; set; }
-        public string GetID() { return "[ ID: " + Network_ID[0] + ":" + Network_ID[1] + ":" + Network_ID[2] + ":" + Network_ID[3] + "]"; }
-        public string GetN_ID() { return Network_ID[0] + "," + Network_ID[1] + "," + Network_ID[2] + "," + Network_ID[3]; }
-        public int[] Network_ID { get; set; }
+        public string GetID() { return "[ ID: " + Persistence_ID[0] + ":" + Persistence_ID[1] + ":" + Persistence_ID[2] + ":" + Persistence_ID[3] + "]"; }
+        public string GetN_ID() { return Persistence_ID[0] + "," + Persistence_ID[1] + "," + Persistence_ID[2] + "," + Persistence_ID[3]; }
+        public int[] Persistence_ID { get; set; }
         public string Parent { get; set; }
 
         public DZ_Item Parent_Item { get; set; }
