@@ -1,165 +1,115 @@
-﻿using Microsoft.Data.Sqlite;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 
-namespace DZ_Players
+namespace DZ_Players;
+
+public class DzPlayersDb
 {
-    public class DZ_PlayersDB
+    public readonly List<DzChar> Players = new();
+        
+    public DzPlayersDb(string dbPath)
     {
-        public List<DZ_Char> Players = new List<DZ_Char>();
+        using var connection = new SqliteConnection($"Data Source={dbPath}");
+        connection.Open();
 
-        public void WipePlayer(string UID)
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT * FROM Players";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
         {
-            if (UID.Length == 17)
-                UID = SteamIDToUID(UID);
-
-            Players.RemoveAt(Players.FindIndex(p => p.UID == UID));
-        }
-
-        public DZ_PlayersDB(string db_path)
-        {
-            using (var connection = new SqliteConnection("Data Source=" + db_path))
-            {
-                connection.Open();
-
-                var command = connection.CreateCommand();
-                command.CommandText = "SELECT Count(*) FROM Players";
-                object? value = command.ExecuteScalar();
-
-                long CountCell = 0;
-
-                if (value != null) CountCell = (long)value;
-
-
-                for (int ID = 1; ID <= CountCell; ID++)
-                {
-                    command.CommandText = "SELECT UID FROM Players WHERE Id = '" + ID + "'";
-
-                    var result = command.ExecuteScalar();
-
-                    if (result != null)
-                    {
-                        string player_uid = result.ToString();
-                        command.CommandText = "SELECT Data FROM Players WHERE Id = '" + ID + "'";
-                        var player_data = command.ExecuteScalar() as byte[];
-                        command.CommandText = "SELECT Alive FROM Players WHERE Id = '" + ID + "'";
-                        var alive = command.ExecuteScalar();
-
-                        Players.Add(new DZ_Char(ID, player_uid, Convert.ToBoolean(alive), player_data));
-                    }
-                }
-            }
-        }
-        public string SteamIDToUID(string steam_id)
-        {
-            return System.Convert.ToBase64String(new SHA256CryptoServiceProvider().ComputeHash(Encoding.ASCII.GetBytes(steam_id))).Replace('/', '_').Replace('+', '-');
+            var id = reader.GetInt32(0);
+            var playerUid = reader.GetString(2);
+            var playerData = reader["Data"] as byte[];
+            var alive = Convert.ToBoolean(reader["Alive"]);
+            Players.Add(new DzChar(id, playerUid, alive, playerData));
         }
     }
-    public class DZ_Char
+        
+    public void WipePlayer(string UID)
     {
-        public DZ_Char(int id, string uid, bool alive, byte[]? data)
-        {
-            ID = id;
-            Alive = alive;
-            UID = uid;
+        if (UID.Length == 17)
+            UID = Utils.SteamIDToUID(UID);
 
-            if (data != null)
-            {
-                using (var memoryStream = new MemoryStream(data))
-                using (var binaryStream = new BinaryReader(memoryStream))
-                {
-                    Alive = alive;
-                    Header_data = binaryStream.ReadBytes(16);
-                    int char_name_len = binaryStream.ReadByte();
-                    Character_name = new string(binaryStream.ReadChars(char_name_len));
-
-                    ushort data_len = binaryStream.ReadUInt16();
-
-                    Stats_data = binaryStream.ReadBytes(data_len);
-
-                    ushort ver = binaryStream.ReadUInt16();
-
-                    uint items_count = binaryStream.ReadUInt32();
-
-                    Items = new List<DZ_Item>();
-
-                    for (int i = 0; i < items_count; i++)
-                    {
-                        Items.Add(new DZ_Item(uid, binaryStream));
-                    }
-                }
-            }
-        }
-        public int ID { get; set; }
-        public ushort Ver { get; set; }
-        public string UID { get; set; }
-        public byte[]? Header_data { get; set; }
-        public string? Character_name { get; set; }
-        public byte[]? Stats_data { get; set; }
-
-        public bool Alive { get; set; }
-
-        public bool IsWiped { get; set; }
-        public bool DataIsChanged { get; set; }
-
-        public List<DZ_Item>? Items { get; set; }
-
+        Players.RemoveAt(Players.FindIndex(p => p.UID == UID));
     }
-    public class DZ_Item
+}
+public class DzChar
+{
+    public int ID { get; set; }
+    public ushort Ver { get; set; }
+    public string UID { get; set; }
+    public byte[]? HeaderData { get; set; }
+    public string? CharacterName { get; set; }
+    public byte[]? StatsData { get; set; }
+    public bool Alive { get; set; }
+    public bool IsWiped { get; set; }
+    public bool DataIsChanged { get; set; }
+    public List<DzItem>? Items { get; set; }
+        
+    public DzChar(int id, string uid, bool alive, byte[]? data)
     {
-        public DZ_Item(string UID, BinaryReader reader, DZ_Item? parent = null)
-        {
-            Parent = UID;
-            uint data_count = reader.ReadUInt32();
-            int item_name_len = reader.ReadByte();
-            Classname = new string(reader.ReadChars(item_name_len));
-            Skip = reader.ReadBytes(6);
-            int slot_len = reader.ReadByte();
-            Slot = new string(reader.ReadChars(slot_len));
-            int custom_data_len = reader.ReadInt32();
+        ID = id;
+        Alive = alive;
+        UID = uid;
 
-            Persistence_ID = new int[4];
-
-            Persistence_ID[0] = reader.ReadInt32();
-            Persistence_ID[1] = reader.ReadInt32();
-            Persistence_ID[2] = reader.ReadInt32();
-            Persistence_ID[3] = reader.ReadInt32();
-
-            Data = reader.ReadBytes(custom_data_len - 16);
-
-            uint childs_count = reader.ReadUInt32();
-
-            for (int i = 0; i < childs_count; i++)
-            {
-                AddChild(new DZ_Item(UID, reader, this));
-            }
-
-            if (parent != null) Parent_Item = parent;
-        }
-        public string Classname { get; set; }
-        public string Slot { get; set; }
-        public byte[] Skip { get; set; }
-        public byte[] Data { get; set; }
-        public string GetID() { return "[ ID: " + Persistence_ID[0] + ":" + Persistence_ID[1] + ":" + Persistence_ID[2] + ":" + Persistence_ID[3] + "]"; }
-        public string GetN_ID() { return Persistence_ID[0] + "," + Persistence_ID[1] + "," + Persistence_ID[2] + "," + Persistence_ID[3]; }
-        public int[] Persistence_ID { get; set; }
-        public string Parent { get; set; }
-
-        public DZ_Item Parent_Item { get; set; }
-
-        public List<DZ_Item> Childs { get; set; }
-
-        public void AddChild(DZ_Item item)
-        {
-            if (Childs == null)
-                Childs = new List<DZ_Item>();
-
-            Childs.Add(item);
-        }
-
+        if (data == null)
+            return;
+            
+        using var memoryStream = new MemoryStream(data);
+        using var binaryStream = new BinaryReader(memoryStream);
+        Alive = alive;
+        HeaderData = binaryStream.ReadBytes(16);
+        int charNameLen = binaryStream.ReadByte();
+        CharacterName = new string(binaryStream.ReadChars(charNameLen));
+        var dataLen = binaryStream.ReadUInt16();
+        StatsData = binaryStream.ReadBytes(dataLen);
+        var ver = binaryStream.ReadUInt16();
+        var itemsCount = binaryStream.ReadUInt32();
+        Items = new List<DzItem>();
+        for (var i = 0; i < itemsCount; i++) 
+            Items.Add(new DzItem(uid, binaryStream));
     }
+}
+public class DzItem
+{
+    public string Classname { get; set; }
+    public string Slot { get; set; }
+    public byte[] Skip { get; set; }
+    public byte[] Data { get; set; }
+    public string GetID() { return $"[ ID: {PersistentId[0]}:{PersistentId[1]}:{PersistentId[2]}:{PersistentId[3]}]"; }
+    public string GetP_ID() { return $"{PersistentId[0]},{PersistentId[1]},{PersistentId[2]},{PersistentId[3]}"; }
+    public int[] PersistentId { get; set; }
+    public string Parent { get; set; }
+    public DzItem? ParentItem { get; set; }
+    public List<DzItem>? Childs { get; set; }
+        
+    public DzItem(string UID, BinaryReader reader, DzItem? parent = null)
+    {
+        Parent = UID;
+        var dataCount = reader.ReadUInt32();
+        var itemNameLen = reader.ReadByte();
+        Classname = new string(reader.ReadChars(itemNameLen));
+        Skip = reader.ReadBytes(6);
+        var slotLen = reader.ReadByte();
+        Slot = new string(reader.ReadChars(slotLen));
+        var customDataLen = reader.ReadInt32();
+        PersistentId = new int[4];
+        PersistentId[0] = reader.ReadInt32();
+        PersistentId[1] = reader.ReadInt32();
+        PersistentId[2] = reader.ReadInt32();
+        PersistentId[3] = reader.ReadInt32();
+        Data = reader.ReadBytes(customDataLen - 16);
+            
+        if (parent != null)
+            ParentItem = parent;
+        var childsCount = reader.ReadUInt32();
+        for (var i = 0; i < childsCount; i++)
+            AddChild(new DzItem(UID, reader, this));
+    }
+
+    private void AddChild(DzItem item)
+    {
+        Childs ??= new List<DzItem>();
+        Childs.Add(item);
+    }
+
 }
