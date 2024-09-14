@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             label1 = new Label();
             searchPlayer = new TextBox();
             label2 = new Label();
@@ -43,19 +44,24 @@
             label3 = new Label();
             dupeInventory = new TreeView();
             playerInventory = new TreeView();
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            copyAsIntArrayMenuItem1 = new ToolStripMenuItem();
             playersListBox = new ListBox();
             groupBox2 = new GroupBox();
+            tableLayoutPanel1 = new TableLayoutPanel();
+            playerDbId = new TextBox();
+            label8 = new Label();
+            playerUID = new TextBox();
             playerStatus = new Label();
-            label7 = new Label();
             playerChartype = new TextBox();
+            label7 = new Label();
             label6 = new Label();
             label5 = new Label();
-            playerUID = new TextBox();
             playerCounter = new Label();
-
             groupBox1.SuspendLayout();
+            contextMenuStrip1.SuspendLayout();
             groupBox2.SuspendLayout();
-
+            tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
             // label1
@@ -200,6 +206,7 @@
             dupeInventory.Name = "dupeInventory";
             dupeInventory.Size = new Size(490, 492);
             dupeInventory.TabIndex = 1;
+            dupeInventory.NodeMouseClick += NodeMouseClick;
             // 
             // playerInventory
             // 
@@ -208,6 +215,20 @@
             playerInventory.Name = "playerInventory";
             playerInventory.Size = new Size(490, 492);
             playerInventory.TabIndex = 0;
+            playerInventory.NodeMouseClick += NodeMouseClick;
+            // 
+            // contextMenuStrip1
+            // 
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { copyAsIntArrayMenuItem1 });
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(186, 26);
+            // 
+            // copyAsIntArrayMenuItem1
+            // 
+            copyAsIntArrayMenuItem1.Name = "copyAsIntArrayMenuItem1";
+            copyAsIntArrayMenuItem1.Size = new Size(185, 22);
+            copyAsIntArrayMenuItem1.Text = "Копировать как int[]";
+            copyAsIntArrayMenuItem1.Click += copyAsIntArrayMenuItem1_Click;
             // 
             // playersListBox
             // 
@@ -221,12 +242,7 @@
             // 
             // groupBox2
             // 
-            groupBox2.Controls.Add(playerStatus);
-            groupBox2.Controls.Add(label7);
-            groupBox2.Controls.Add(playerChartype);
-            groupBox2.Controls.Add(label6);
-            groupBox2.Controls.Add(label5);
-            groupBox2.Controls.Add(playerUID);
+            groupBox2.Controls.Add(tableLayoutPanel1);
             groupBox2.Location = new Point(379, 29);
             groupBox2.Name = "groupBox2";
             groupBox2.Size = new Size(1015, 128);
@@ -234,56 +250,106 @@
             groupBox2.TabStop = false;
             groupBox2.Text = "Игрок";
             // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.ColumnCount = 2;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.Controls.Add(playerDbId, 1, 0);
+            tableLayoutPanel1.Controls.Add(label8, 0, 0);
+            tableLayoutPanel1.Controls.Add(playerUID, 1, 1);
+            tableLayoutPanel1.Controls.Add(playerStatus, 1, 3);
+            tableLayoutPanel1.Controls.Add(playerChartype, 1, 2);
+            tableLayoutPanel1.Controls.Add(label7, 0, 3);
+            tableLayoutPanel1.Controls.Add(label6, 0, 2);
+            tableLayoutPanel1.Controls.Add(label5, 0, 1);
+            tableLayoutPanel1.Dock = DockStyle.Fill;
+            tableLayoutPanel1.Location = new Point(3, 19);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 4;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 27F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 27F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 27F));
+            tableLayoutPanel1.Size = new Size(1009, 106);
+            tableLayoutPanel1.TabIndex = 18;
+            // 
+            // playerDbId
+            // 
+            playerDbId.Dock = DockStyle.Fill;
+            playerDbId.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 204);
+            playerDbId.Location = new Point(183, 3);
+            playerDbId.Name = "playerDbId";
+            playerDbId.ReadOnly = true;
+            playerDbId.Size = new Size(823, 23);
+            playerDbId.TabIndex = 19;
+            // 
+            // label8
+            // 
+            label8.Dock = DockStyle.Fill;
+            label8.Location = new Point(3, 0);
+            label8.Name = "label8";
+            label8.Size = new Size(174, 27);
+            label8.TabIndex = 18;
+            label8.Text = "DB ID:";
+            label8.TextAlign = ContentAlignment.TopCenter;
+            // 
+            // playerUID
+            // 
+            playerUID.Dock = DockStyle.Fill;
+            playerUID.Location = new Point(183, 30);
+            playerUID.Name = "playerUID";
+            playerUID.ReadOnly = true;
+            playerUID.Size = new Size(823, 23);
+            playerUID.TabIndex = 0;
+            // 
             // playerStatus
             // 
-            playerStatus.Location = new Point(205, 77);
+            playerStatus.Dock = DockStyle.Fill;
+            playerStatus.Location = new Point(183, 84);
             playerStatus.Name = "playerStatus";
-            playerStatus.Size = new Size(548, 18);
+            playerStatus.Size = new Size(823, 27);
             playerStatus.TabIndex = 17;
             playerStatus.Text = "Отсуствует";
             // 
+            // playerChartype
+            // 
+            playerChartype.Dock = DockStyle.Fill;
+            playerChartype.Location = new Point(183, 57);
+            playerChartype.Name = "playerChartype";
+            playerChartype.ReadOnly = true;
+            playerChartype.Size = new Size(823, 23);
+            playerChartype.TabIndex = 15;
+            // 
             // label7
             // 
-            label7.Location = new Point(6, 77);
+            label7.Dock = DockStyle.Fill;
+            label7.Location = new Point(3, 84);
             label7.Name = "label7";
-            label7.Size = new Size(193, 18);
+            label7.Size = new Size(174, 27);
             label7.TabIndex = 16;
             label7.Text = "Статус:";
             label7.TextAlign = ContentAlignment.TopCenter;
             // 
-            // playerChartype
-            // 
-            playerChartype.Location = new Point(205, 45);
-            playerChartype.Name = "playerChartype";
-            playerChartype.ReadOnly = true;
-            playerChartype.Size = new Size(548, 23);
-            playerChartype.TabIndex = 15;
-            // 
             // label6
             // 
-            label6.Location = new Point(6, 48);
+            label6.Dock = DockStyle.Fill;
+            label6.Location = new Point(3, 54);
             label6.Name = "label6";
-            label6.Size = new Size(193, 18);
+            label6.Size = new Size(174, 30);
             label6.TabIndex = 14;
             label6.Text = "Тип персонажа:";
             label6.TextAlign = ContentAlignment.TopCenter;
             // 
             // label5
             // 
-            label5.Location = new Point(6, 19);
+            label5.Dock = DockStyle.Fill;
+            label5.Location = new Point(3, 27);
             label5.Name = "label5";
-            label5.Size = new Size(193, 18);
+            label5.Size = new Size(174, 27);
             label5.TabIndex = 13;
             label5.Text = "UID:";
             label5.TextAlign = ContentAlignment.TopCenter;
-            // 
-            // playerUID
-            // 
-            playerUID.Location = new Point(205, 16);
-            playerUID.Name = "playerUID";
-            playerUID.ReadOnly = true;
-            playerUID.Size = new Size(548, 23);
-            playerUID.TabIndex = 0;
             // 
             // playerCounter
             // 
@@ -308,8 +374,10 @@
             Name = "PlayerEditor";
             Size = new Size(1397, 798);
             groupBox1.ResumeLayout(false);
+            contextMenuStrip1.ResumeLayout(false);
             groupBox2.ResumeLayout(false);
-            groupBox2.PerformLayout();
+            tableLayoutPanel1.ResumeLayout(false);
+            tableLayoutPanel1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -339,5 +407,10 @@
         private Label playerCounter;
         private Button clearDuplicatesListButton;
         private Button searchDuplicatesButton;
+        private TableLayoutPanel tableLayoutPanel1;
+        private TextBox playerDbId;
+        private Label label8;
+        private ContextMenuStrip contextMenuStrip1;
+        private ToolStripMenuItem copyAsIntArrayMenuItem1;
     }
 }

@@ -10,12 +10,8 @@ public partial class PlayerEditor : UserControl
     public void LoadPlayerDB(string path)
     {
         DB = new DzPlayersDb(path);
-
-        if(DB != null) 
-        {
-            playerCounter.Text = $"Записей: {DB.Players.Count}";
-            LoadPlayersList();
-        }
+        playerCounter.Text = $"Записей: {DB.Players.Count}";
+        LoadPlayersList();
     }
     public void ReloadDB(string path)
     {
@@ -34,15 +30,16 @@ public partial class PlayerEditor : UserControl
         playerInventory.Nodes.Clear();
         dupeInventory.Nodes.Clear();
 
+        playerDbId.Clear();
         playerUID.Clear();
         playerChartype.Clear();
-        playerStatus.Text = "None";
+        playerStatus.Text = "Отсутствует";
     }
     private void LoadPlayersList()
     {
         playersListBox.BeginUpdate();
 
-        foreach ( var player in DB.Players) 
+        foreach (var player in DB.Players)
             playersListBox.Items.Add(player);
 
         playersListBox.DisplayMember = "UID";
@@ -64,11 +61,11 @@ public partial class PlayerEditor : UserControl
     }
     private void FindNextPlayer()
     {
-        if (string.IsNullOrWhiteSpace(searchPlayer.Text)) 
+        if (string.IsNullOrWhiteSpace(searchPlayer.Text))
             return;
         var uid = searchPlayer.Text;
 
-        if (searchPlayer.Text.Length == 17) 
+        if (searchPlayer.Text.Length == 17)
             uid = Utils.SteamIDToUID(uid);
 
         foreach (DzChar item in playersListBox.Items)
@@ -93,18 +90,17 @@ public partial class PlayerEditor : UserControl
                 continue;
             foreach (var item in player.Items)
             {
-                if(!allItemsList.ContainsKey(item.GetP_ID()))
-                    allItemsList.Add(item.GetP_ID(), new List<DzItem>());
-
-                allItemsList[item.GetP_ID()].Add(item);
+                if(!allItemsList.ContainsKey(item.PersistentGuid))
+                    allItemsList.Add(item.PersistentGuid, new List<DzItem>());
+                allItemsList[item.PersistentGuid].Add(item);
             }
         }
 
         foreach (var pairItem in allItemsList)
         {
-            if (pairItem.Value.Count <= 1) 
+            if (pairItem.Value.Count <= 1)
                 continue;
-            var itemNode = new TreeNode(pairItem.Key);
+            var itemNode = new TreeNode(pairItem.Key) { Tag = pairItem.Key };
             foreach(var item in pairItem.Value)
             {
                 if (!parentWithDupedItems.ContainsKey(item.Parent))
@@ -122,13 +118,13 @@ public partial class PlayerEditor : UserControl
 
         dupeInventory.BeginUpdate();
         dupeInventory.Nodes.Clear();
-           
+
 
         foreach (var pair in sortDict)
         {
             var player = new TreeNode($"Count: {pair.Value.Count} {pair.Key}");
 
-            foreach (var item in pair.Value) 
+            foreach (var item in pair.Value)
                 player.Nodes.Add(ParseItem(item));
             playerNode.Nodes.Add(player);
         }
@@ -137,16 +133,17 @@ public partial class PlayerEditor : UserControl
         dupeInventory.Nodes.Add(itemsNode);
 
         dupeInventory.EndUpdate();
-        
+
     }
     private void SelectNextPlayer(object sender, EventArgs e)
     {
-        if (playersListBox.SelectedIndex == -1) 
+        if (playersListBox.SelectedIndex == -1)
             return;
 
         if (playersListBox.SelectedItem is not DzChar player)
             return;
 
+        playerDbId.Text = player.ID.ToString();
         playerUID.Text = player.UID;
         playerChartype.Text = player.CharacterName;
         playerStatus.Text = player.Alive ? "Alive" : "Dead";
@@ -161,40 +158,60 @@ public partial class PlayerEditor : UserControl
         playerInventory.BeginUpdate();
         playerInventory.Nodes.Clear();
 
-        foreach (var item in player.Items) 
+        foreach (var item in player.Items)
             playerInventory.Nodes.Add(ParseItem(item));
 
         playerInventory.EndUpdate();
     }
     private static TreeNode ParseItem(DzItem item)
     {
-        var itemNode = new TreeNode(item.Classname);
-        itemNode.Tag = item;
+        var itemNode = new TreeNode(item.Classname) { Tag = item };
 
-        itemNode.Nodes.Add( new TreeNode($"Slot: {item.Slot}"));
-        itemNode.Nodes.Add( new TreeNode($"PersistentID: {item.GetID()}"));
+        itemNode.Nodes.Add(new TreeNode($"Slot: {item.Slot}"));
+        itemNode.Nodes.Add(new TreeNode($"PersistentID: {item.PersistentGuid}") { Tag = item.PersistentGuid });
         itemNode.Nodes.Add(new TreeNode($"ParentUID: {item.Parent}"));
 
         var cargo = new TreeNode("Cargo");
         var attachments = new TreeNode("Attachments");
 
-        if (item.Childs == null) 
+        if (item.Childs == null)
             return itemNode;
-        foreach( var child in item.Childs )
+        foreach(var child in item.Childs)
         {
             var childNode = ParseItem(child);
 
-            if( child.Slot == "cargo") 
-                cargo.Nodes.Add( childNode );
+            if(child.Slot == "cargo")
+                cargo.Nodes.Add(childNode);
             else
-                attachments.Nodes.Add( childNode );
+                attachments.Nodes.Add(childNode);
         }
 
-        if( cargo.Nodes.Count > 0)
+        if(cargo.Nodes.Count > 0)
             itemNode.Nodes.Add(cargo);
-        if( attachments.Nodes.Count > 0)
+        if(attachments.Nodes.Count > 0)
             itemNode.Nodes.Add(attachments);
 
         return itemNode;
+    }
+
+    private void NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+    {
+        if (e.Button != MouseButtons.Right)
+            return;
+        var treeView = (TreeView)sender;
+        if (e.Node.Tag is not string)
+            return;
+        treeView.SelectedNode = e.Node;
+        contextMenuStrip1.Show(treeView, e.Location);
+    }
+
+    private void copyAsIntArrayMenuItem1_Click(object sender, EventArgs e)
+    {
+        var node = (((TreeView)(((ContextMenuStrip)((ToolStripMenuItem)sender).Owner!)!).SourceControl!)!).SelectedNode;
+        var bytes = Guid.Parse((string)node.Tag).ToByteArray();
+        var persistArray = new int[4];
+        for (var i = 0; i < 4; i++) 
+            persistArray[i] = BitConverter.ToInt32(bytes, i * 4);
+        Clipboard.SetText(string.Join(',', persistArray.Select(x => x.ToString()).ToArray()));
     }
 }

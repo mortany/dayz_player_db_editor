@@ -75,9 +75,7 @@ public class DzItem
     public string Slot { get; set; }
     public byte[] Skip { get; set; }
     public byte[] Data { get; set; }
-    public string GetID() { return $"[ ID: {PersistentId[0]}:{PersistentId[1]}:{PersistentId[2]}:{PersistentId[3]}]"; }
-    public string GetP_ID() { return $"{PersistentId[0]},{PersistentId[1]},{PersistentId[2]},{PersistentId[3]}"; }
-    public int[] PersistentId { get; set; }
+    public string PersistentGuid { get; set; }
     public string Parent { get; set; }
     public DzItem? ParentItem { get; set; }
     public List<DzItem>? Childs { get; set; }
@@ -92,11 +90,7 @@ public class DzItem
         var slotLen = reader.ReadByte();
         Slot = new string(reader.ReadChars(slotLen));
         var customDataLen = reader.ReadInt32();
-        PersistentId = new int[4];
-        PersistentId[0] = reader.ReadInt32();
-        PersistentId[1] = reader.ReadInt32();
-        PersistentId[2] = reader.ReadInt32();
-        PersistentId[3] = reader.ReadInt32();
+        PersistentGuid = new Guid(reader.ReadBytes(16)).ToString().ToUpper();
         Data = reader.ReadBytes(customDataLen - 16);
             
         if (parent != null)
