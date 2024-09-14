@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             label1 = new Label();
             searchPlayer = new TextBox();
             label2 = new Label();
@@ -43,6 +44,8 @@
             label3 = new Label();
             dupeInventory = new TreeView();
             playerInventory = new TreeView();
+            contextMenuStrip1 = new ContextMenuStrip(components);
+            copyAsIntArrayMenuItem1 = new ToolStripMenuItem();
             playersListBox = new ListBox();
             groupBox2 = new GroupBox();
             tableLayoutPanel1 = new TableLayoutPanel();
@@ -56,6 +59,7 @@
             label5 = new Label();
             playerCounter = new Label();
             groupBox1.SuspendLayout();
+            contextMenuStrip1.SuspendLayout();
             groupBox2.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
@@ -202,6 +206,7 @@
             dupeInventory.Name = "dupeInventory";
             dupeInventory.Size = new Size(490, 492);
             dupeInventory.TabIndex = 1;
+            dupeInventory.NodeMouseClick += NodeMouseClick;
             // 
             // playerInventory
             // 
@@ -210,6 +215,20 @@
             playerInventory.Name = "playerInventory";
             playerInventory.Size = new Size(490, 492);
             playerInventory.TabIndex = 0;
+            playerInventory.NodeMouseClick += NodeMouseClick;
+            // 
+            // contextMenuStrip1
+            // 
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { copyAsIntArrayMenuItem1 });
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new Size(186, 26);
+            // 
+            // copyAsIntArrayMenuItem1
+            // 
+            copyAsIntArrayMenuItem1.Name = "copyAsIntArrayMenuItem1";
+            copyAsIntArrayMenuItem1.Size = new Size(185, 22);
+            copyAsIntArrayMenuItem1.Text = "Копировать как int[]";
+            copyAsIntArrayMenuItem1.Click += copyAsIntArrayMenuItem1_Click;
             // 
             // playersListBox
             // 
@@ -355,6 +374,7 @@
             Name = "PlayerEditor";
             Size = new Size(1397, 798);
             groupBox1.ResumeLayout(false);
+            contextMenuStrip1.ResumeLayout(false);
             groupBox2.ResumeLayout(false);
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();
@@ -390,5 +410,7 @@
         private TableLayoutPanel tableLayoutPanel1;
         private TextBox playerDbId;
         private Label label8;
+        private ContextMenuStrip contextMenuStrip1;
+        private ToolStripMenuItem copyAsIntArrayMenuItem1;
     }
 }
