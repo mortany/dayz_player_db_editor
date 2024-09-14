@@ -46,6 +46,7 @@
             playerInventory = new TreeView();
             contextMenuStrip1 = new ContextMenuStrip(components);
             copyAsIntArrayMenuItem1 = new ToolStripMenuItem();
+            copyParentUIDMenuItem = new ToolStripMenuItem();
             playersListBox = new ListBox();
             groupBox2 = new GroupBox();
             tableLayoutPanel1 = new TableLayoutPanel();
@@ -219,16 +220,23 @@
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { copyAsIntArrayMenuItem1 });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { copyAsIntArrayMenuItem1, copyParentUIDMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(186, 26);
+            contextMenuStrip1.Size = new Size(222, 48);
             // 
             // copyAsIntArrayMenuItem1
             // 
             copyAsIntArrayMenuItem1.Name = "copyAsIntArrayMenuItem1";
-            copyAsIntArrayMenuItem1.Size = new Size(185, 22);
+            copyAsIntArrayMenuItem1.Size = new Size(221, 22);
             copyAsIntArrayMenuItem1.Text = "Копировать как int[]";
             copyAsIntArrayMenuItem1.Click += copyAsIntArrayMenuItem1_Click;
+            // 
+            // copyParentUIDMenuItem
+            // 
+            copyParentUIDMenuItem.Name = "copyParentUIDMenuItem";
+            copyParentUIDMenuItem.Size = new Size(221, 22);
+            copyParentUIDMenuItem.Text = "Копировать UID владельца";
+            copyParentUIDMenuItem.Click += copyParentUIDMenuItem_Click;
             // 
             // playersListBox
             // 
@@ -277,7 +285,7 @@
             // playerDbId
             // 
             playerDbId.Dock = DockStyle.Fill;
-            playerDbId.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 204);
+            playerDbId.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             playerDbId.Location = new Point(183, 3);
             playerDbId.Name = "playerDbId";
             playerDbId.ReadOnly = true;
@@ -412,5 +420,6 @@
         private Label label8;
         private ContextMenuStrip contextMenuStrip1;
         private ToolStripMenuItem copyAsIntArrayMenuItem1;
+        private ToolStripMenuItem copyParentUIDMenuItem;
     }
 }

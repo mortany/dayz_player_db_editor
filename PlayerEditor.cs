@@ -55,7 +55,7 @@ public partial class PlayerEditor : UserControl
             FindNextPlayer();
         else if (sender == searchDuplicatesButton)
             SearchDuplicates();
-        else if(sender == clearDuplicatesListButton)
+        else if (sender == clearDuplicatesListButton)
             dupeInventory.Nodes.Clear();
 
     }
@@ -90,7 +90,7 @@ public partial class PlayerEditor : UserControl
                 continue;
             foreach (var item in player.Items)
             {
-                if(!allItemsList.ContainsKey(item.PersistentGuid))
+                if (!allItemsList.ContainsKey(item.PersistentGuid))
                     allItemsList.Add(item.PersistentGuid, new List<DzItem>());
                 allItemsList[item.PersistentGuid].Add(item);
             }
@@ -100,8 +100,8 @@ public partial class PlayerEditor : UserControl
         {
             if (pairItem.Value.Count <= 1)
                 continue;
-            var itemNode = new TreeNode(pairItem.Key) { Tag = pairItem.Key };
-            foreach(var item in pairItem.Value)
+            var itemNode = new TreeNode(pairItem.Key) { Tag = "GUID:" + pairItem.Key };
+            foreach (var item in pairItem.Value)
             {
                 if (!parentWithDupedItems.ContainsKey(item.Parent))
                     parentWithDupedItems.Add(item.Parent, new List<DzItem>());
@@ -122,7 +122,7 @@ public partial class PlayerEditor : UserControl
 
         foreach (var pair in sortDict)
         {
-            var player = new TreeNode($"Count: {pair.Value.Count} {pair.Key}");
+            var player = new TreeNode($"Count: {pair.Value.Count} {pair.Key}") { Tag = "PUID:" + pair.Key };
 
             foreach (var item in pair.Value)
                 player.Nodes.Add(ParseItem(item));
@@ -152,7 +152,7 @@ public partial class PlayerEditor : UserControl
     }
     private void ParseInventory(DzChar? player)
     {
-        if(player?.Items == null)
+        if (player?.Items == null)
             return;
 
         playerInventory.BeginUpdate();
@@ -168,27 +168,27 @@ public partial class PlayerEditor : UserControl
         var itemNode = new TreeNode(item.Classname) { Tag = item };
 
         itemNode.Nodes.Add(new TreeNode($"Slot: {item.Slot}"));
-        itemNode.Nodes.Add(new TreeNode($"PersistentID: {item.PersistentGuid}") { Tag = item.PersistentGuid });
-        itemNode.Nodes.Add(new TreeNode($"ParentUID: {item.Parent}"));
+        itemNode.Nodes.Add(new TreeNode($"PersistentID: {item.PersistentGuid}") { Tag = "GUID:" + item.PersistentGuid });
+        itemNode.Nodes.Add(new TreeNode($"ParentUID: {item.Parent}") { Tag = "PUID:" + item.Parent }) ;
 
         var cargo = new TreeNode("Cargo");
         var attachments = new TreeNode("Attachments");
 
         if (item.Childs == null)
             return itemNode;
-        foreach(var child in item.Childs)
+        foreach (var child in item.Childs)
         {
             var childNode = ParseItem(child);
 
-            if(child.Slot == "cargo")
+            if (child.Slot == "cargo")
                 cargo.Nodes.Add(childNode);
             else
                 attachments.Nodes.Add(childNode);
         }
 
-        if(cargo.Nodes.Count > 0)
+        if (cargo.Nodes.Count > 0)
             itemNode.Nodes.Add(cargo);
-        if(attachments.Nodes.Count > 0)
+        if (attachments.Nodes.Count > 0)
             itemNode.Nodes.Add(attachments);
 
         return itemNode;
@@ -201,6 +201,17 @@ public partial class PlayerEditor : UserControl
         var treeView = (TreeView)sender;
         if (e.Node.Tag is not string)
             return;
+
+        copyAsIntArrayMenuItem1.Visible = false;
+        copyParentUIDMenuItem.Visible = false;
+
+        string node_tag = (string)e.Node.Tag;
+
+        if (node_tag.Contains("GUID:"))
+            copyAsIntArrayMenuItem1.Visible = true;
+        else if (node_tag.Contains("PUID:"))
+            copyParentUIDMenuItem.Visible = true;
+
         treeView.SelectedNode = e.Node;
         contextMenuStrip1.Show(treeView, e.Location);
     }
@@ -208,10 +219,16 @@ public partial class PlayerEditor : UserControl
     private void copyAsIntArrayMenuItem1_Click(object sender, EventArgs e)
     {
         var node = (((TreeView)(((ContextMenuStrip)((ToolStripMenuItem)sender).Owner!)!).SourceControl!)!).SelectedNode;
-        var bytes = Guid.Parse((string)node.Tag).ToByteArray();
+        var bytes = Guid.Parse(((string)node.Tag).Remove(0, 5)).ToByteArray();
         var persistArray = new int[4];
-        for (var i = 0; i < 4; i++) 
+        for (var i = 0; i < 4; i++)
             persistArray[i] = BitConverter.ToInt32(bytes, i * 4);
         Clipboard.SetText(string.Join(',', persistArray.Select(x => x.ToString()).ToArray()));
+    }
+
+    private void copyParentUIDMenuItem_Click(object sender, EventArgs e)
+    {
+        var node = (((TreeView)(((ContextMenuStrip)((ToolStripMenuItem)sender).Owner!)!).SourceControl!)!).SelectedNode;
+        Clipboard.SetText(((string)node.Tag).Remove(0,5));
     }
 }
